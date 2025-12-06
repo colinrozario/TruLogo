@@ -95,8 +95,8 @@ export default function Home() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                             {/* Card 1: Scanning */}
-                            <div className="glass-panel p-10 rounded-3xl relative overflow-hidden group hover:border-emerald-500/30 transition-all duration-500">
-                                <div className="absolute -right-10 -top-10 opacity-10 group-hover:opacity-20 transition-opacity duration-500 rotate-12">
+                            <div className="glass-panel p-10 rounded-3xl relative overflow-hidden group hover:border-emerald-500/60 hover:bg-emerald-500/5 hover:shadow-2xl hover:shadow-emerald-500/20 transition-all duration-500 transform hover:-translate-y-2">
+                                <div className="absolute -right-10 -top-10 opacity-10 group-hover:opacity-40 transition-opacity duration-500 rotate-12">
                                     <Search className="w-64 h-64 text-emerald-500" />
                                 </div>
                                 <div className="relative z-10">
@@ -111,8 +111,8 @@ export default function Home() {
                             </div>
 
                             {/* Card 2: Legal */}
-                            <div className="glass-panel p-10 rounded-3xl relative overflow-hidden group hover:border-blue-500/30 transition-all duration-500">
-                                <div className="absolute -right-10 -top-10 opacity-10 group-hover:opacity-20 transition-opacity duration-500 rotate-12">
+                            <div className="glass-panel p-10 rounded-3xl relative overflow-hidden group hover:border-blue-500/60 hover:bg-blue-500/5 hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-500 transform hover:-translate-y-2">
+                                <div className="absolute -right-10 -top-10 opacity-10 group-hover:opacity-40 transition-opacity duration-500 rotate-12">
                                     <Scale className="w-64 h-64 text-blue-500" />
                                 </div>
                                 <div className="relative z-10">
@@ -127,8 +127,8 @@ export default function Home() {
                             </div>
 
                             {/* Card 3: Regional */}
-                            <div className="glass-panel p-10 rounded-3xl relative overflow-hidden group hover:border-purple-500/30 transition-all duration-500">
-                                <div className="absolute -right-10 -top-10 opacity-10 group-hover:opacity-20 transition-opacity duration-500 rotate-12">
+                            <div className="glass-panel p-10 rounded-3xl relative overflow-hidden group hover:border-purple-500/60 hover:bg-purple-500/5 hover:shadow-2xl hover:shadow-purple-500/20 transition-all duration-500 transform hover:-translate-y-2">
+                                <div className="absolute -right-10 -top-10 opacity-10 group-hover:opacity-40 transition-opacity duration-500 rotate-12">
                                     <Globe className="w-64 h-64 text-purple-500" />
                                 </div>
                                 <div className="relative z-10">
@@ -143,8 +143,8 @@ export default function Home() {
                             </div>
 
                             {/* Card 4: Generative */}
-                            <div className="glass-panel p-10 rounded-3xl relative overflow-hidden group hover:border-yellow-500/30 transition-all duration-500">
-                                <div className="absolute -right-10 -top-10 opacity-10 group-hover:opacity-20 transition-opacity duration-500 rotate-12">
+                            <div className="glass-panel p-10 rounded-3xl relative overflow-hidden group hover:border-yellow-500/60 hover:bg-yellow-500/5 hover:shadow-2xl hover:shadow-yellow-500/20 transition-all duration-500 transform hover:-translate-y-2">
+                                <div className="absolute -right-10 -top-10 opacity-10 group-hover:opacity-40 transition-opacity duration-500 rotate-12">
                                     <Zap className="w-64 h-64 text-yellow-500" />
                                 </div>
                                 <div className="relative z-10">
