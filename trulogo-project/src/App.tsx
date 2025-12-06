@@ -4,7 +4,7 @@ import LogoAnalysis from './components/LogoAnalysis';
 import LogoGenerator from './components/LogoGenerator';
 import Dashboard from './components/Dashboard';
 import LegalAdvice from './components/LegalAdvice';
-import { AppView, SupportedLanguage, AnalysisResult } from './types';
+import { AppView, type SupportedLanguage, type AnalysisResult } from './types';
 import { Shield, Zap, ArrowRight, Activity, Search, Scale, Globe } from 'lucide-react';
 
 function App() {

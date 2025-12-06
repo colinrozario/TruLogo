@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { UploadCloud, Loader2, AlertTriangle, Shield, Check, Activity, FileText, ChevronRight } from 'lucide-react';
 import { analyzeLogoRisk, fileToBase64 } from '../services/geminiService';
-import { AnalysisResult, RiskLevel } from '../types';
+import { type AnalysisResult, RiskLevel } from '../types';
 
 interface LogoAnalysisProps {
     onAnalysisComplete: (result: AnalysisResult) => void;
@@ -98,8 +98,8 @@ const LogoAnalysis: React.FC<LogoAnalysisProps> = ({ onAnalysisComplete }) => {
                         onClick={handleAnalyze}
                         disabled={!file || isAnalyzing}
                         className={`w-full py-4 rounded-lg font-bold text-sm tracking-widest uppercase transition-all flex justify-center items-center gap-2 ${!file || isAnalyzing
-                                ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed'
-                                : 'bg-white text-black hover:bg-emerald-400 hover:shadow-[0_0_20px_rgba(16,185,129,0.4)]'
+                            ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed'
+                            : 'bg-white text-black hover:bg-emerald-400 hover:shadow-[0_0_20px_rgba(16,185,129,0.4)]'
                             }`}
                     >
                         {isAnalyzing ? (
@@ -128,8 +128,8 @@ const LogoAnalysis: React.FC<LogoAnalysisProps> = ({ onAnalysisComplete }) => {
                             <div className="flex items-center justify-between mb-2">
                                 <span className="text-neutral-400 text-xs font-mono">RISK_LEVEL</span>
                                 <span className={`text-xs font-bold px-2 py-1 rounded border ${result.riskLevel === RiskLevel.LOW ? 'border-emerald-500/50 text-emerald-400 bg-emerald-500/10' :
-                                        result.riskLevel === RiskLevel.MEDIUM ? 'border-yellow-500/50 text-yellow-400 bg-yellow-500/10' :
-                                            'border-red-500/50 text-red-400 bg-red-500/10'
+                                    result.riskLevel === RiskLevel.MEDIUM ? 'border-yellow-500/50 text-yellow-400 bg-yellow-500/10' :
+                                        'border-red-500/50 text-red-400 bg-red-500/10'
                                     }`}>
                                     {result.riskLevel}
                                 </span>

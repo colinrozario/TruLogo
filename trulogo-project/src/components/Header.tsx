@@ -1,7 +1,7 @@
 import React from 'react';
 import { Shield, Globe, Menu } from 'lucide-react';
 import { NAV_ITEMS, LANGUAGES } from '../constants';
-import { AppView, SupportedLanguage } from '../types';
+import { AppView, type SupportedLanguage } from '../types';
 
 interface HeaderProps {
     currentView: AppView;
@@ -31,8 +31,8 @@ const Header: React.FC<HeaderProps> = ({ currentView, setCurrentView, language, 
                             key={item.id}
                             onClick={() => setCurrentView(item.id as AppView)}
                             className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${currentView === item.id
-                                    ? 'bg-white/10 text-white'
-                                    : 'text-neutral-400 hover:text-white hover:bg-white/5'
+                                ? 'bg-white/10 text-white'
+                                : 'text-neutral-400 hover:text-white hover:bg-white/5'
                                 }`}
                         >
                             {item.label}

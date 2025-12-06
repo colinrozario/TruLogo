@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Scale, FileText, ExternalLink, ShieldAlert } from 'lucide-react';
 import { getLegalAdvice } from '../services/geminiService';
-import { AnalysisResult } from '../types';
+import { type AnalysisResult } from '../types';
 import ReactMarkdown from 'react-markdown';
 
 interface LegalAdviceProps {
