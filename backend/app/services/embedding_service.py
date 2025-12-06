@@ -19,6 +19,17 @@ class EmbeddingService:
         """Generate embedding for text using SBERT."""
         return self.text_model.encode(text).tolist()
 
+    def get_clip_text_embedding(self, text: str):
+        """Generate embedding for text using CLIP (for zero-shot image matching)."""
+        inputs = self.clip_processor(text=[text], return_tensors="pt", padding=True)
+        
+        with torch.no_grad():
+            text_features = self.clip_model.get_text_features(**inputs)
+        
+        # Normalize
+        text_features = text_features / text_features.norm(p=2, dim=-1, keepdim=True)
+        return text_features[0].tolist()
+
     def get_image_embedding(self, image_bytes: bytes):
         """Generate embedding for image using CLIP."""
         image = Image.open(io.BytesIO(image_bytes))

@@ -31,20 +31,24 @@ export default function Navbar() {
                                 How it Works
                             </Link>
                             <Link
-                                href="#"
+                                href="/dashboard"
                                 className="border-transparent text-muted-foreground hover:text-foreground hover:border-primary inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors"
                             >
-                                Pricing
+                                Dashboard
                             </Link>
                         </div>
                     </div>
                     <div className="hidden sm:ml-6 sm:flex sm:items-center sm:space-x-4">
-                        <button className="text-muted-foreground hover:text-foreground px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                            Log in
-                        </button>
-                        <button className="bg-primary text-primary-foreground hover:bg-blue-700 px-4 py-2 rounded-md text-sm font-medium shadow-sm transition-colors">
-                            Get Started
-                        </button>
+                        <Link href="/dashboard">
+                            <button className="text-muted-foreground hover:text-foreground px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                                Log in
+                            </button>
+                        </Link>
+                        <Link href="/dashboard">
+                            <button className="bg-primary text-primary-foreground hover:bg-blue-700 px-4 py-2 rounded-md text-sm font-medium shadow-sm transition-colors">
+                                Dashboard
+                            </button>
+                        </Link>
                     </div>
                     <div className="-mr-2 flex items-center sm:hidden">
                         <button
