@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from 'react';
-import { UploadCloud, Loader2, AlertTriangle, Shield, Activity } from 'lucide-react';
+import { UploadCloud, Loader2, AlertTriangle, Shield, Activity, ArrowRight } from 'lucide-react';
 import { analyzeLogoRisk, fileToBase64 } from '../services/geminiService';
 import { backendService } from '../services/apiService';
 
@@ -151,7 +151,7 @@ const LogoUpload = ({ onAnalysisComplete }) => {
                         {/* Summary Block */}
                         <div className="border border-white/10 bg-white/5 rounded-lg p-4 backdrop-blur-md">
                             <div className="flex items-center justify-between mb-2">
-                                <span className="text-neutral-400 text-xs font-mono">RISK_LEVEL</span>
+                                <span className="text-neutral-400 text-xs font-mono">RISK LEVEL</span>
                                 <span className={`text-xs font-bold px-2 py-1 rounded border ${result.riskLevel === 'Low' ? 'border-emerald-500/50 text-emerald-400 bg-emerald-500/10' :
                                     result.riskLevel === 'Medium' ? 'border-yellow-500/50 text-yellow-400 bg-yellow-500/10' :
                                         'border-red-500/50 text-red-400 bg-red-500/10'
@@ -179,7 +179,7 @@ const LogoUpload = ({ onAnalysisComplete }) => {
                         {/* Visual Flags */}
                         {result.flags.length > 0 && (
                             <div className="space-y-2">
-                                <span className="text-neutral-500 text-xs font-mono">DETECTED_FLAGS</span>
+                                <span className="text-neutral-500 text-xs font-mono">DETECTED FLAGS</span>
                                 {result.flags.map((flag, idx) => (
                                     <div key={idx} className="flex items-center gap-2 text-sm text-red-300 bg-red-950/20 border border-red-900/30 px-3 py-2 rounded">
                                         <AlertTriangle className="w-3 h-3 text-red-500" />
@@ -191,7 +191,7 @@ const LogoUpload = ({ onAnalysisComplete }) => {
 
                         {/* Matches Table Style */}
                         <div>
-                            <span className="text-neutral-500 text-xs font-mono block mb-2">SIMILAR_MARKS_DB</span>
+                            <span className="text-neutral-500 text-xs font-mono block mb-2">GLOBAL TRADEMARK DATABASE MATCHES</span>
                             <div className="border border-white/10 rounded-lg overflow-hidden text-sm">
                                 <table className="w-full text-left">
                                     <thead className="bg-white/5 text-neutral-400 font-mono text-xs">
@@ -199,12 +199,13 @@ const LogoUpload = ({ onAnalysisComplete }) => {
                                             <th className="p-3 font-normal">ENTITY</th>
                                             <th className="p-3 font-normal">SIMILARITY</th>
                                             <th className="p-3 font-normal">STATUS</th>
+                                            <th className="p-3 font-normal">ACTION</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-white/5 text-neutral-300">
                                         {result.similarTrademarks.map((tm, i) => (
-                                            <tr key={i} className="hover:bg-white/5 transition-colors">
-                                                <td className="p-3">{tm.name}</td>
+                                            <tr key={i} className="hover:bg-white/5 transition-colors group">
+                                                <td className="p-3 font-medium text-white">{tm.name}</td>
                                                 <td className="p-3 font-mono text-xs">
                                                     <div className="w-full bg-white/10 rounded-full h-1.5 mt-1 mb-1">
                                                         <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: `${tm.similarityScore}%` }}></div>
@@ -212,6 +213,16 @@ const LogoUpload = ({ onAnalysisComplete }) => {
                                                     {tm.similarityScore}%
                                                 </td>
                                                 <td className="p-3 text-xs opacity-70">{tm.status}</td>
+                                                <td className="p-3">
+                                                    <a
+                                                        href={`https://www.google.com/search?q=${encodeURIComponent(tm.name + ' trademark logo')}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-xs text-blue-400 hover:text-blue-300 hover:underline flex items-center gap-1 opacity-100 transition-opacity"
+                                                    >
+                                                        View <ArrowRight className="w-3 h-3" />
+                                                    </a>
+                                                </td>
                                             </tr>
                                         ))}
                                     </tbody>

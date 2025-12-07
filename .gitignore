@@ -52,6 +52,7 @@ venv.bak/
 .mypy_cache/
 .dmypy.json
 .pyre/
+.env
 
 # FastAPI artifacts
 *.db
