@@ -6,6 +6,7 @@ import { analyzeLogoRisk, fileToBase64 } from '../services/geminiService';
 const LogoUpload = ({ onAnalysisComplete }) => {
     const [file, setFile] = useState(null);
     const [preview, setPreview] = useState(null);
+    const [brandName, setBrandName] = useState('');
 
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [result, setResult] = useState(null);
@@ -26,7 +27,7 @@ const LogoUpload = ({ onAnalysisComplete }) => {
         setError(null);
         try {
             const base64 = await fileToBase64(file);
-            const data = await analyzeLogoRisk(base64, "", "User is an MSME in the retail sector.");
+            const data = await analyzeLogoRisk(base64, brandName, "User is an MSME in the retail sector.");
             setResult(data);
             onAnalysisComplete(data);
         } catch (err) {
@@ -68,6 +69,17 @@ const LogoUpload = ({ onAnalysisComplete }) => {
                     <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-neutral-600"></div>
                     <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-neutral-600"></div>
                     <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-neutral-600"></div>
+                </div>
+
+                {/* Brand Name Input */}
+                <div className="mt-6 mb-2">
+                    <input
+                        type="text"
+                        value={brandName}
+                        onChange={(e) => setBrandName(e.target.value)}
+                        placeholder="Enter Brand Name"
+                        className="w-full bg-background border border-border rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors font-mono placeholder:text-neutral-600"
+                    />
                 </div>
 
                 {/* Action Button */}
