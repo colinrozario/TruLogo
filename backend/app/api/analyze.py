@@ -8,6 +8,9 @@ from app.services.remedy_engine import remedy_engine
 from app.services.regeneration_service import regeneration_service
 from typing import Optional
 import json
+import io
+import traceback
+from PIL import Image
 
 router = APIRouter()
 
@@ -116,6 +119,22 @@ async def analyze_logo(file: UploadFile = File(...)):
         )
         
         remedy = remedy_engine.get_remedy(risk_result['score'], safety_results)
+        
+        # --- Save to Database ---
+        try:
+            from app.models.scan import Scan
+            from app.core.database import get_db
+            
+            # We need to get a DB session since it's not injected in the route signature yet.
+            # Ideally we'd update the signature, but for minimal invasiveness let's use the generator manually 
+            # or better - update the signature. Let's update the signature in a separate step or just do it here properly.
+            # Actually, to use Depends, we need to change the function signature.
+            # Let's do the saving here but we need the db session.
+            # Let's modify the function signature in the next step properly.
+            # For now, just return the dict.
+            pass
+        except Exception as e:
+            print(f"DB Save Error: {e}")
 
         return {
             "filename": file.filename,
@@ -134,7 +153,10 @@ async def analyze_logo(file: UploadFile = File(...)):
     except Exception as e:
         print(f"Error in analyze_logo: {e}")
         import traceback
-        traceback.print_exc()
+        error_msg = traceback.format_exc()
+        print(error_msg)
+        with open("error.log", "w") as f:
+            f.write(error_msg)
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/generate/logo")
