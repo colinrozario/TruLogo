@@ -2,6 +2,9 @@
 import React, { useState } from 'react';
 import { UploadCloud, Loader2, AlertTriangle, Shield, Activity, ArrowRight } from 'lucide-react';
 import { storageService } from '../services/storageService';
+import { analyzeLogoRisk, fileToBase64 } from '../services/geminiService';
+import { useLanguage } from '../context/LanguageContext';
+import { backendService } from '../services/apiService';
 
 const LogoUpload = ({ onAnalysisComplete }) => {
     const { t } = useLanguage();
@@ -29,48 +32,81 @@ const LogoUpload = ({ onAnalysisComplete }) => {
         if (!file) return;
         setIsAnalyzing(true);
         setError(null);
+
+        // Reset results immediately
+        setResult(null);
+        setBackendResult(null);
+        setShowHeatmap(false);
+
         try {
             const base64 = await fileToBase64(file);
 
-            // Run both analyses in parallel
-            // We still use Gemini as a secondary validator/explainer
-            const [geminiData, backendData] = await Promise.all([
-                analyzeLogoRisk(base64, brandName, "User is an MSME in the retail sector."),
-                backendService.analyzeLogo(file)
-            ]);
+            // Start both requests in parallel
+            const geminiPromise = analyzeLogoRisk(base64, brandName, "User is an MSME in the retail sector.");
+            const backendPromise = backendService.analyzeLogo(file);
 
-            // Merge results: Backend is the primary source of truth for the 5-layer system
-            const finalResult = {
-                ...geminiData, // Base gemini structured data
-                riskScore: backendData?.risk_score || geminiData.riskScore,
-                riskLevel: backendData?.risk_level || geminiData.riskLevel,
-                summary: backendData?.remedy?.action_plan || geminiData.summary, // Prefer our legal Remedy engine
-                flags: [
-                    ...(geminiData.flags || []),
-                    ...(backendData?.risk_factors || [])
-                ],
-                ocrText: backendData?.detected_text,
-                breakdown: backendData?.risk_breakdown
+            // 1. FAST PATH: Wait for Gemini (Primary AI)
+            // This usually takes 2-3 seconds
+            const geminiData = await geminiPromise;
+
+            // Create initial result with just Gemini data
+            const initialResult = {
+                ...geminiData,
+                // Ensure defaults
+                riskScore: geminiData.riskScore,
+                riskLevel: geminiData.riskLevel,
+                summary: geminiData.summary,
+                flags: geminiData.flags || [],
+                ocrText: null, // Will come later
+                breakdown: null, // Will come later
+                similarTrademarks: geminiData.similarTrademarks || []
             };
 
-            setResult(finalResult);
-            setBackendResult(backendData);
+            // Show result IMMEDIATELY to User
+            setResult(initialResult);
+            setIsAnalyzing(false); // Stop loading spinner, show data!
 
-            if (backendData?.heatmap) {
-                setShowHeatmap(true);
-            }
+            // 2. SLOW PATH: Wait for Backend in Background (5-Layer System)
+            // This might take 10-15 seconds
+            backendPromise.then(backendData => {
+                setBackendResult(backendData);
 
-            // Save to Dashboard
-            storageService.addScan({
-                brandName: brandName || 'Unknown Brand',
-                riskLevel: finalResult.riskLevel
+                // Merge backend data into existing result
+                setResult(prevResult => ({
+                    ...prevResult,
+                    flags: [
+                        ...(prevResult.flags || []),
+                        ...(backendData?.risk_factors || [])
+                    ],
+                    ocrText: backendData?.detected_text,
+                    breakdown: backendData?.risk_breakdown
+                }));
+
+                // Auto-show heatmap if available
+                if (backendData?.heatmap) {
+                    setShowHeatmap(true);
+                }
+
+                // Save to Dashboard (only after we have full data or at least Gemini)
+                storageService.addScan({
+                    brandName: brandName || 'Unknown Brand',
+                    riskLevel: initialResult.riskLevel
+                });
+
+                // Notify parent
+                onAnalysisComplete(initialResult);
+            }).catch(err => {
+                console.warn("Backend analysis failed silently:", err);
+                // Still save the Gemini result to dashboard
+                storageService.addScan({
+                    brandName: brandName || 'Unknown Brand',
+                    riskLevel: initialResult.riskLevel
+                });
             });
 
-            onAnalysisComplete(finalResult);
         } catch (err) {
             console.error(err);
             setError("Analysis failed. Please try again.");
-        } finally {
             setIsAnalyzing(false);
         }
     };
@@ -195,14 +231,7 @@ const LogoUpload = ({ onAnalysisComplete }) => {
                                 <span className="text-sm text-neutral-500 mb-1">/ 100</span>
                             </div>
 
-                            {/* Layer Badges - NEW */}
-                            <div className="flex flex-wrap gap-2 my-3">
-                                <span className="text-[10px] uppercase font-bold text-neutral-500 border border-white/10 px-1.5 py-0.5 rounded bg-black/30">Layer 1: Preproc</span>
-                                <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-black/30 border ${backendResult?.phash ? 'text-emerald-400 border-emerald-500/20' : 'text-neutral-500 border-white/10'}`}>Layer 2: Fingerprint</span>
-                                <span className="text-[10px] uppercase font-bold text-blue-400 border border-blue-500/20 px-1.5 py-0.5 rounded bg-black/30">Layer 3: CLIP</span>
-                                <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-black/30 border ${result.ocrText ? 'text-purple-400 border-purple-500/20' : 'text-neutral-500 border-white/10'}`}>Layer 4: OCR</span>
-                                <span className="text-[10px] uppercase font-bold text-red-400 border border-red-500/20 px-1.5 py-0.5 rounded bg-black/30">Layer 5: Legal</span>
-                            </div>
+                            {/* Layer Badges REMOVED as per user request */}
 
                             <p className="text-neutral-300 text-sm leading-relaxed border-t border-white/5 pt-3 mt-3">
                                 {result.summary}
@@ -244,33 +273,44 @@ const LogoUpload = ({ onAnalysisComplete }) => {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-white/5 text-neutral-300">
-                                        {backendResult?.similar_marks?.map((tm, i) => (
-                                            <tr key={i} className="hover:bg-white/5 transition-colors group">
-                                                <td className="p-3 font-medium text-white">
-                                                    {tm.metadata?.filename || tm.name || 'Unknown'}
-                                                    {tm.type && <span className="ml-2 text-[10px] text-neutral-500 uppercase px-1 border border-white/10 rounded">{tm.type}</span>}
-                                                </td>
-                                                <td className="p-3 font-mono text-xs">
-                                                    <div className="w-full bg-white/10 rounded-full h-1.5 mt-1 mb-1">
-                                                        <div className={`h-1.5 rounded-full ${tm.similarity > 80 ? 'bg-red-500' : 'bg-emerald-500'}`} style={{ width: `${tm.similarity}%` }}></div>
-                                                    </div>
-                                                    {tm.similarity}%
-                                                </td>
-                                                <td className="p-3 text-xs opacity-70">{tm.status || 'Active'}</td>
-                                                <td className="p-3">
-                                                    <a
-                                                        href={`https://www.google.com/search?q=${encodeURIComponent((tm.name || 'trademark') + ' logo')}`}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="text-xs text-blue-400 hover:text-blue-300 hover:underline flex items-center gap-1 opacity-100 transition-opacity"
-                                                    >
-                                                        {t('analyze.table.view')} <ArrowRight className="w-3 h-3" />
-                                                    </a>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                        {(!backendResult?.similar_marks || backendResult.similar_marks.length === 0) && (
-                                            <tr><td colSpan="4" className="p-4 text-center text-neutral-500 text-xs italic">No similar trademarks found in vector database.</td></tr>
+                                        {/* Combine Backend Matches with Gemini Matches */}
+                                        {[
+                                            ...(backendResult?.similar_marks || []),
+                                            ...(result.similarTrademarks || [])
+                                        ]
+                                            // FILTER: Remove 'Unknown' matches
+                                            .filter(tm => {
+                                                const name = tm.name || tm.metadata?.filename || '';
+                                                return name && name !== 'Unknown' && name !== 'unknown';
+                                            })
+                                            .map((tm, i) => (
+                                                <tr key={i} className="hover:bg-white/5 transition-colors group">
+                                                    <td className="p-3 font-medium text-white">
+                                                        {tm.metadata?.filename || tm.name || 'Unknown'}
+                                                        {tm.type && <span className="ml-2 text-[10px] text-neutral-500 uppercase px-1 border border-white/10 rounded">{tm.type}</span>}
+                                                        {tm.classId && <span className="ml-2 text-[10px] text-neutral-500 uppercase px-1 border border-white/10 rounded">{tm.classId}</span>}
+                                                    </td>
+                                                    <td className="p-3 font-mono text-xs">
+                                                        <div className="w-full bg-white/10 rounded-full h-1.5 mt-1 mb-1">
+                                                            <div className={`h-1.5 rounded-full ${tm.similarity || tm.similarityScore > 80 ? 'bg-red-500' : 'bg-emerald-500'}`} style={{ width: `${tm.similarity || tm.similarityScore}%` }}></div>
+                                                        </div>
+                                                        {tm.similarity || tm.similarityScore}%
+                                                    </td>
+                                                    <td className="p-3 text-xs opacity-70">{tm.status || 'Active'}</td>
+                                                    <td className="p-3">
+                                                        <a
+                                                            href={`https://www.google.com/search?q=${encodeURIComponent((tm.name || 'trademark') + ' logo')}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-xs text-blue-400 hover:text-blue-300 hover:underline flex items-center gap-1 opacity-100 transition-opacity"
+                                                        >
+                                                            {t('analyze.table.view')} <ArrowRight className="w-3 h-3" />
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        {(!backendResult?.similar_marks?.length && !result.similarTrademarks?.length) && (
+                                            <tr><td colSpan="4" className="p-4 text-center text-neutral-500 text-xs italic">No similar trademarks found.</td></tr>
                                         )}
                                     </tbody>
                                 </table>

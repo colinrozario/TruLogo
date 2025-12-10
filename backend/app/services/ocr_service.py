@@ -20,6 +20,11 @@ class OCRService:
             return ""
 
         try:
+            # Resize image if too large (speed optimization)
+            max_dim = 1024
+            if image.width > max_dim or image.height > max_dim:
+                image.thumbnail((max_dim, max_dim))
+                
             # EasyOCR expects numpy array or file path
             img_np = np.array(image)
             
