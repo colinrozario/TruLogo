@@ -25,5 +25,25 @@ export const backendService = {
             // Return null so the UI knows the backend failed but doesn't crash
             return null;
         }
+    },
+
+    getDashboardStats: async () => {
+        try {
+            const response = await axios.get(`${API_BASE_URL}/dashboard/stats`);
+            return response.data;
+        } catch (error) {
+            console.error("Fetch Stats Error:", error);
+            return null;
+        }
+    },
+
+    getRecentLogs: async () => {
+        try {
+            const response = await axios.get(`${API_BASE_URL}/dashboard/recent`);
+            return response.data;
+        } catch (error) {
+            console.error("Fetch Recent Logs Error:", error);
+            return null;
+        }
     }
 };

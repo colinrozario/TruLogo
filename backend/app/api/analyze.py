@@ -12,10 +12,15 @@ import io
 import traceback
 from PIL import Image
 
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.database import get_db
+from app.models.scan import Scan
+
 router = APIRouter()
 
 @router.post("/analyze/logo")
-async def analyze_logo(file: UploadFile = File(...)):
+async def analyze_logo(file: UploadFile = File(...), db: AsyncSession = Depends(get_db)):
     try:
         # Read file content
         content = await file.read()
@@ -122,19 +127,29 @@ async def analyze_logo(file: UploadFile = File(...)):
         
         # --- Save to Database ---
         try:
-            from app.models.scan import Scan
-            from app.core.database import get_db
-            
-            # We need to get a DB session since it's not injected in the route signature yet.
-            # Ideally we'd update the signature, but for minimal invasiveness let's use the generator manually 
-            # or better - update the signature. Let's update the signature in a separate step or just do it here properly.
-            # Actually, to use Depends, we need to change the function signature.
-            # Let's do the saving here but we need the db session.
-            # Let's modify the function signature in the next step properly.
-            # For now, just return the dict.
-            pass
+            new_scan = Scan(
+                filename=file.filename,
+                brand_name=metadata.get('brand_name') or "Unknown", # We might need to pass brand_name in form data
+                risk_score=risk_result['score'],
+                risk_level=risk_result['level'],
+                ocr_text=detected_text,
+                analysis_data={
+                    "risk_factors": risk_result['factors'],
+                    "risk_breakdown": risk_result['breakdown'],
+                    "similar_marks": processed_matches[:5],
+                    "safety": safety_results,
+                    "remedy": remedy
+                }
+            )
+            db.add(new_scan)
+            await db.commit()
+            await db.refresh(new_scan)
+            print(f"Saved scan {new_scan.id} to DB")
         except Exception as e:
             print(f"DB Save Error: {e}")
+            import traceback
+            traceback.print_exc()
+            # Don't fail the request if DB save fails
 
         return {
             "filename": file.filename,

@@ -1,8 +1,8 @@
 "use client";
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { CheckCircle, AlertTriangle, Clock, ArrowUpRight } from 'lucide-react';
-import { storageService } from '../services/storageService';
+import { backendService } from '../services/apiService';
 import { useLanguage } from '../context/LanguageContext';
 
 const MOCK_CHART_DATA = [
@@ -19,19 +19,25 @@ const Dashboard = () => {
     const [stats, setStats] = useState({ safeScans: 0, riskAlerts: 0, pendingFilings: 0 });
     const [recentLogs, setRecentLogs] = useState([]);
 
-    // Load initial data
+    // Load Live Data from Backend
     React.useEffect(() => {
-        const loadData = () => {
-            const data = storageService.getDashboardData();
-            setStats(data.stats);
-            setRecentLogs(data.recentLogs);
+        const loadData = async () => {
+            const statsData = await backendService.getDashboardStats();
+            const logsData = await backendService.getRecentLogs();
+
+            if (statsData?.stats) {
+                setStats(statsData.stats);
+            }
+            if (logsData?.recentLogs) {
+                setRecentLogs(logsData.recentLogs);
+            }
         };
 
         loadData();
 
-        // Listen for updates
-        window.addEventListener('dashboard-updated', loadData);
-        return () => window.removeEventListener('dashboard-updated', loadData);
+        // Poll every 10 seconds for updates (simple real-time)
+        const interval = setInterval(loadData, 10000);
+        return () => clearInterval(interval);
     }, []);
 
     return (
