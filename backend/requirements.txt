@@ -1,7 +1,5 @@
 fastapi
 uvicorn
-sqlalchemy
-asyncpg
 python-multipart
 python-dotenv
 torch
@@ -15,3 +13,6 @@ pydantic-settings
 scipy
 pytest
 httpx
+diffusers
+accelerate
+transformers

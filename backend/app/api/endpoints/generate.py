@@ -16,47 +16,42 @@ class LogoGenRequest(BaseModel):
 
 @router.post("/generate/logo")
 async def generate_logo(
-    business_name: str = Form(...),
-    business_description: str = Form(...),
-    business_type: str = Form("none"),
-    color: str = Form("none")
+    request: LogoGenRequest
 ):
-    api_key = os.getenv("SLAZZER_API_KEY")
-    if not api_key:
-        raise HTTPException(status_code=500, detail="Slazzer API Key not configured")
+    business_name = request.business_name
+    business_description = request.business_description
+    business_type = request.business_type
+    color = request.color
+    from app.services.stable_diffusion import logo_generator
+    from fastapi.responses import Response
 
-    url = "https://api.slazzer.com/v2.0/logo-generator" # Verify this endpoint in documentation
-    
-    headers = {
-        "API-KEY": api_key
-    }
-    
-    data = {
-        "business_name": business_name,
-        "business_description": business_description,
-        "business_type": business_type,
-        "color": color
-    }
+    if not business_name:
+        raise HTTPException(status_code=400, detail="Business name is required")
 
-    async with httpx.AsyncClient() as client:
-        try:
-            # Note: Slazzer likely returns an image or a URL. 
-            # If it returns binary, we might want to stream it or save it.
-            # Assuming it returns binary image for now based on standard image gen APIs, 
-            # or a JSON with url. Let's assume JSON with URL or check response content type.
-            response = await client.post(url, headers=headers, data=data, timeout=30.0)
-            response.raise_for_status()
-            
-            # Check content type
-            content_type = response.headers.get("content-type", "")
-            if "image" in content_type:
-                # API returned an image directly
-                from fastapi.responses import Response
-                return Response(content=response.content, media_type=content_type)
-            else:
-                return response.json()
+    try:
+        # Construct a rich prompt
+        prompt = f"Logo for {business_name}"
+        if business_description:
+            prompt += f", {business_description}"
+        if business_type and business_type != "none":
+            prompt += f", {business_type} industry"
+        if color and color != "none":
+            prompt += f", {color} color scheme"
+
+        # Generate image
+        # This is a blocking operation, efficiently handling it in async app requires running in threadpool if it takes time.
+        # However, for simplicity in this prototype, we'll run it directly or offload if needed.
+        # Since diffusers runs on CPU/GPU, it might block the event loop. 
+        # For production, utilize run_in_executor.
+        import asyncio
+        from concurrent.futures import ThreadPoolExecutor
+        
+        # Run generation in a separate thread to avoid blocking the main loop
+        loop = asyncio.get_event_loop()
+        image_bytes = await loop.run_in_executor(None, logo_generator.generate, prompt)
+
+        return Response(content=image_bytes, media_type="image/png")
                 
-        except httpx.HTTPStatusError as e:
-            raise HTTPException(status_code=e.response.status_code, detail=f"Slazzer API Error: {e.response.text}")
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        print(f"Generation Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
