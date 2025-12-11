@@ -27,9 +27,12 @@ app.include_router(generate.router, prefix="/api/v1")
 
 @app.on_event("startup")
 async def startup():
-    async with engine.begin() as conn:
-        # Create all tables if they don't exist
-        await conn.run_sync(Base.metadata.create_all)
+    try:
+        async with engine.begin() as conn:
+            # Create all tables if they don't exist
+            await conn.run_sync(Base.metadata.create_all)
+    except Exception as e:
+        print(f"WARNING: Database startup failed. Application running in limited mode. Error: {e}")
 
 @app.get("/")
 async def root():
